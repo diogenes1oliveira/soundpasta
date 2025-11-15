@@ -6,7 +6,7 @@ Transmit clipboard data over audio between two devices using the Quiet.js protoc
 
 ### 1.1 Generic Device Model Interface
 
-- [ ] Create abstract base classes/interfaces:
+- [ ] Create abstract base classes/interfaces/models:
   - `OutputDevice` - for audio output devices
   - `InputDevice` - for audio input devices
   - `VirtualDevice` - can function as either input or output (with type parameter)
@@ -33,15 +33,7 @@ Transmit clipboard data over audio between two devices using the Quiet.js protoc
 - [ ] Handle device persistence configuration
 - [ ] Error handling for PulseAudio operations
 
-### 1.4 Windows Virtual Device Support (Future)
-
-- [ ] Research Windows alternatives:
-  - Virtual Audio Cable
-  - VB-Audio Virtual Cable
-  - Windows Audio Session API (WASAPI) virtual devices
-- [ ] Implement Windows backend interface
-
-### 1.5 Testing Virtual Audio Pipes
+### 1.4 Testing Virtual Audio Pipes
 
 - [ ] Generate DTMF (Dual-Tone Multi-Frequency) dial tones
 - [ ] Test audio transmission through virtual PulseAudio pipes:

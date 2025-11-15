@@ -14,6 +14,7 @@ dependencies = [
     "attrs>=25.4.0",
     "cattrs>=25.3.0",
     "click>=8.3.0",
+    "tabulate>=0.9.0",
 ]
 
 [build-system]
@@ -39,6 +40,7 @@ dev = [
     "pytest-mock>=3.15.1",
     "ruff>=0.14.5",
     "types-click>=7.1.8",
+    "types-tabulate>=0.9.0.20241207",
 ]
 
 [tool.pytest.ini_options]
