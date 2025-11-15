@@ -1,4 +1,5 @@
 import dataclasses
+import enum
 
 
 @dataclasses.dataclass
@@ -28,6 +29,9 @@ class OutputDevice:
 
     volume: str
     """Volume information."""
+
+    virtual: bool
+    """Whether the device is virtual (created programmatically)."""
 
     properties: dict[str, str]
     """Generic properties dictionary."""
@@ -61,22 +65,41 @@ class InputDevice:
     volume: str
     """Volume information."""
 
+    virtual: bool
+    """Whether the device is virtual (created programmatically)."""
+
     properties: dict[str, str]
     """Generic properties dictionary."""
 
 
+class PipeType(str, enum.Enum):
+    """Type of virtual pipe."""
+
+    INPUT = "input"
+    """Input pipe (acts as microphone)."""
+
+    OUTPUT = "output"
+    """Output pipe (acts as speaker)."""
+
+
 @dataclasses.dataclass
 class VirtualPipe:
-    """Dataclass for virtual pipes connecting input and output."""
+    """Dataclass for virtual pipes (null sink with monitor source and remapped source)."""
 
     name: str
     """Pipe identifier/name."""
 
-    input_device: InputDevice
-    """Associated input device."""
+    type: PipeType
+    """Type of pipe (input or output)."""
 
-    output_device: OutputDevice
-    """Associated output device."""
+    sink: OutputDevice
+    """The null sink device."""
+
+    monitor: InputDevice
+    """The monitor source of the sink."""
+
+    source: InputDevice
+    """The remapped source device (acts as microphone for input, speaker for output)."""
 
     persistent: bool
     """Whether the pipe should persist across restarts."""

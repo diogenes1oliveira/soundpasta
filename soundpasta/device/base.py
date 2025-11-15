@@ -1,7 +1,7 @@
 import abc
 import typing
 
-from soundpasta.device.models import InputDevice, OutputDevice, VirtualPipe
+from soundpasta.device.models import InputDevice, OutputDevice, PipeType, VirtualPipe
 
 
 class DeviceManager(abc.ABC):
@@ -23,8 +23,8 @@ class DeviceManager(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def create_pipe(self, name: str, input_device: InputDevice, output_device: OutputDevice) -> VirtualPipe:
-        """Create a virtual pipe."""
+    def create_pipe(self, name: str, pipe_type: PipeType) -> VirtualPipe:
+        """Create a virtual pipe with the given name and type."""
         ...
 
     @abc.abstractmethod

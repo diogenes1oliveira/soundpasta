@@ -1,6 +1,13 @@
+import logging
+
 import click
 
 from soundpasta.device.cli import device
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 
 
 @click.group()

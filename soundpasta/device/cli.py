@@ -2,15 +2,14 @@ import click
 from tabulate import tabulate
 
 from soundpasta.device.base import DeviceManager
+from soundpasta.device.pulseaudio import PulseAudioDeviceManager
 
 
 @click.group()
 @click.pass_context
 def device(ctx: click.Context) -> None:
     """Device management commands."""
-    from unittest.mock import MagicMock
-
-    ctx.obj = MagicMock(spec=DeviceManager)
+    ctx.obj = PulseAudioDeviceManager()
 
 
 @device.group()
@@ -30,7 +29,7 @@ def input_list(obj: DeviceManager, quiet: bool) -> None:
         for device in devices:
             click.echo(device.name)
     else:
-        headers = ["Name", "Description", "Index", "Format", "Channels", "Sample Rate", "Mute", "Volume"]
+        headers = ["Name", "Description", "Index", "Format", "Channels", "Sample Rate", "Mute", "Volume", "Virtual"]
         rows = [
             [
                 device.name,
@@ -41,6 +40,7 @@ def input_list(obj: DeviceManager, quiet: bool) -> None:
                 device.sample_rate,
                 device.mute,
                 device.volume,
+                device.virtual,
             ]
             for device in devices
         ]
@@ -83,7 +83,7 @@ def output_list(obj: DeviceManager, quiet: bool) -> None:
         for device in devices:
             click.echo(device.name)
     else:
-        headers = ["Name", "Description", "Index", "Format", "Channels", "Sample Rate", "Mute", "Volume"]
+        headers = ["Name", "Description", "Index", "Format", "Channels", "Sample Rate", "Mute", "Volume", "Virtual"]
         rows = [
             [
                 device.name,
@@ -94,6 +94,7 @@ def output_list(obj: DeviceManager, quiet: bool) -> None:
                 device.sample_rate,
                 device.mute,
                 device.volume,
+                device.virtual,
             ]
             for device in devices
         ]
