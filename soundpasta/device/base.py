@@ -23,8 +23,14 @@ class DeviceManager(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def create_pipe(self, name: str, pipe_type: PipeType) -> VirtualPipe:
-        """Create a virtual pipe with the given name and type."""
+    def create_pipe(self, name: str, pipe_type: PipeType, persistent: bool = False) -> VirtualPipe:
+        """Create a virtual pipe with the given name and type.
+
+        Args:
+            name: Name of the pipe to create.
+            pipe_type: Type of pipe (input or output).
+            persistent: Whether the pipe should persist across restarts.
+        """
         ...
 
     @abc.abstractmethod

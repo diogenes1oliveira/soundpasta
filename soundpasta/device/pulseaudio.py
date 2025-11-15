@@ -1,7 +1,7 @@
 import logging
-import re
 import subprocess
 import typing
+from pathlib import Path
 
 from soundpasta.device.base import DeviceManager
 from soundpasta.device.models import InputDevice, OutputDevice, PipeType, VirtualPipe
@@ -21,6 +21,9 @@ class PulseAudioDeviceManager(DeviceManager):
                         passed via command line, so use formats like "-Pipe" instead of " (Pipe)".
         """
         self.pipe_suffix = pipe_suffix
+        self._pulse_config_dir = Path.home() / ".config" / "pulse"
+        self._soundpasta_config_file = self._pulse_config_dir / "soundpasta.pa"
+        self._default_config_file = self._pulse_config_dir / "default.pa"
 
     def list_outputs(self) -> list[OutputDevice]:
         """List all output devices."""
@@ -128,16 +131,17 @@ class PulseAudioDeviceManager(DeviceManager):
             remapped_source = None
 
             if sink_name.endswith("-pipe"):
-                pipe_type = PipeType.OUTPUT
+                pipe_type = PipeType.INPUT
                 pipe_name = sink_name[:-5]
                 remapped_source = sources_by_name.get(pipe_name)
             else:
-                pipe_type = PipeType.INPUT
+                pipe_type = PipeType.OUTPUT
                 pipe_name = sink_name
                 remapped_source_name = f"{pipe_name}-pipe"
                 remapped_source = sources_by_name.get(remapped_source_name)
 
             if sink and monitor and remapped_source and pipe_name:
+                is_persistent = self._is_pipe_in_config(pipe_name, pipe_type)
                 pipes.append(
                     VirtualPipe(
                         name=pipe_name,
@@ -145,23 +149,23 @@ class PulseAudioDeviceManager(DeviceManager):
                         sink=sink,
                         monitor=monitor,
                         source=remapped_source,
-                        persistent=False,
+                        persistent=is_persistent,
                     )
                 )
 
         logger.info(f"Listed {len(pipes)} virtual pipes")
         return pipes
 
-    def create_pipe(self, name: str, pipe_type: PipeType) -> VirtualPipe:
+    def create_pipe(self, name: str, pipe_type: PipeType, persistent: bool = False) -> VirtualPipe:
         """Create a virtual pipe (null sink with monitor source and remapped source)."""
         logger.info(f"Creating virtual pipe '{name}' (type: {pipe_type.value})")
         if pipe_type == PipeType.INPUT:
-            sink_name = name
-            source_name = f"{name}-pipe"
-            monitor_name = f"{name}.monitor"
-        elif pipe_type == PipeType.OUTPUT:
             sink_name = f"{name}-pipe"
             source_name = name
+            monitor_name = f"{sink_name}.monitor"
+        elif pipe_type == PipeType.OUTPUT:
+            sink_name = name
+            source_name = f"{name}-pipe"
             monitor_name = f"{sink_name}.monitor"
         else:
             raise ValueError(f"Invalid pipe type: {pipe_type}")
@@ -200,13 +204,17 @@ class PulseAudioDeviceManager(DeviceManager):
         if not source:
             raise RuntimeError(f"Failed to find remapped source '{source_name}'")
         logger.info(f"Created virtual pipe '{name}' with sink, monitor, and source")
+        if persistent:
+            self._write_pipe_to_config(
+                name, pipe_type, sink_name, source_name, monitor_name, sink_description, source_description
+            )
         return VirtualPipe(
             name=name,
             type=pipe_type,
             sink=sink,
             monitor=monitor,
             source=source,
-            persistent=False,
+            persistent=persistent,
         )
 
     def remove_pipe(self, name: str) -> None:
@@ -217,12 +225,14 @@ class PulseAudioDeviceManager(DeviceManager):
         if not pipe:
             logger.warning(f"Pipe '{name}' not found")
             return
+        if pipe.persistent:
+            self._remove_pipe_from_config(name, pipe.type)
         if pipe.type == PipeType.INPUT:
-            sink_name = name
-            source_name = f"{name}-pipe"
-        else:
             sink_name = f"{name}-pipe"
             source_name = name
+        else:
+            sink_name = name
+            source_name = f"{name}-pipe"
         result = subprocess.run(
             ["pactl", "list", "short", "modules"],
             capture_output=True,
@@ -442,3 +452,108 @@ class PulseAudioDeviceManager(DeviceManager):
         )
         details["virtual"] = is_virtual
         return details
+
+    def _ensure_config_include(self) -> None:
+        """Ensure .include soundpasta.pa exists in default.pa."""
+        if not self._default_config_file.exists():
+            self._pulse_config_dir.mkdir(parents=True, exist_ok=True)
+            with open(self._default_config_file, "w") as f:
+                f.write(".include soundpasta.pa\n")
+            logger.debug(f"Created default.pa with include directive")
+            return
+
+        with open(self._default_config_file, "r") as f:
+            content = f.read()
+
+        include_line = ".include soundpasta.pa"
+        if include_line not in content:
+            with open(self._default_config_file, "a") as f:
+                f.write(f"\n{include_line}\n")
+            logger.debug(f"Added include directive to default.pa")
+
+    def _write_pipe_to_config(
+        self,
+        name: str,
+        pipe_type: PipeType,
+        sink_name: str,
+        source_name: str,
+        monitor_name: str,
+        sink_description: str,
+        source_description: str,
+    ) -> None:
+        """Write pipe module-load commands to soundpasta.pa config file."""
+        self._ensure_config_include()
+        self._pulse_config_dir.mkdir(parents=True, exist_ok=True)
+
+        null_sink_line = (
+            f"load-module module-null-sink sink_name={sink_name} sink_properties=device.description={sink_description}"
+        )
+        remap_source_line = f"load-module module-remap-source source_name={source_name} master={monitor_name} source_properties=device.description={source_description}"
+
+        if self._soundpasta_config_file.exists():
+            with open(self._soundpasta_config_file, "r") as f:
+                content = f.read()
+            if sink_name in content and source_name in content:
+                logger.debug(f"Pipe '{name}' already in config file, skipping")
+                return
+        else:
+            content = ""
+
+        with open(self._soundpasta_config_file, "a") as f:
+            if content and not content.endswith("\n"):
+                f.write("\n")
+            f.write(f"# Soundpasta pipe: {name} ({pipe_type.value})\n")
+            f.write(f"{null_sink_line}\n")
+            f.write(f"{remap_source_line}\n")
+        logger.info(f"Wrote pipe '{name}' to config file")
+
+    def _remove_pipe_from_config(self, name: str, pipe_type: PipeType) -> None:
+        """Remove pipe module-load commands from soundpasta.pa config file."""
+        if not self._soundpasta_config_file.exists():
+            return
+
+        if pipe_type == PipeType.INPUT:
+            sink_name = f"{name}-pipe"
+            source_name = name
+        else:
+            sink_name = name
+            source_name = f"{name}-pipe"
+
+        with open(self._soundpasta_config_file, "r") as f:
+            lines = f.readlines()
+
+        new_lines = []
+        skip_next = 0
+        for i, line in enumerate(lines):
+            if skip_next > 0:
+                skip_next -= 1
+                continue
+            if f"# Soundpasta pipe: {name}" in line:
+                skip_next = 2
+                continue
+            if sink_name in line and "module-null-sink" in line:
+                continue
+            if source_name in line and "module-remap-source" in line:
+                continue
+            new_lines.append(line)
+
+        with open(self._soundpasta_config_file, "w") as f:
+            f.writelines(new_lines)
+        logger.info(f"Removed pipe '{name}' from config file")
+
+    def _is_pipe_in_config(self, name: str, pipe_type: PipeType) -> bool:
+        """Check if pipe exists in soundpasta.pa config file."""
+        if not self._soundpasta_config_file.exists():
+            return False
+
+        if pipe_type == PipeType.INPUT:
+            sink_name = f"{name}-pipe"
+            source_name = name
+        else:
+            sink_name = name
+            source_name = f"{name}-pipe"
+
+        with open(self._soundpasta_config_file, "r") as f:
+            content = f.read()
+
+        return sink_name in content and source_name in content and f"# Soundpasta pipe: {name}" in content

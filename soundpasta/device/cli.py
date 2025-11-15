@@ -2,6 +2,7 @@ import click
 from tabulate import tabulate
 
 from soundpasta.device.base import DeviceManager
+from soundpasta.device.models import PipeType
 from soundpasta.device.pulseaudio import PulseAudioDeviceManager
 
 
@@ -53,8 +54,8 @@ def input_list(obj: DeviceManager, quiet: bool) -> None:
 @click.pass_obj
 def input_create(obj: DeviceManager, name: str, persistent: bool) -> None:
     """Create a virtual input device."""
-    click.echo(f"Creating input device '{name}' (persistent={persistent})", err=True)
-    # TODO: Implement when DeviceManager has create_input method
+    pipe = obj.create_pipe(name, PipeType.INPUT, persistent=persistent)
+    click.echo(f"Created input device '{pipe.name}' (persistent={pipe.persistent})", err=True)
 
 
 @input.command("remove")
@@ -107,8 +108,8 @@ def output_list(obj: DeviceManager, quiet: bool) -> None:
 @click.pass_obj
 def output_create(obj: DeviceManager, name: str, persistent: bool) -> None:
     """Create a virtual output device."""
-    click.echo(f"Creating output device '{name}' (persistent={persistent})", err=True)
-    # TODO: Implement when DeviceManager has create_output method
+    pipe = obj.create_pipe(name, PipeType.OUTPUT, persistent=persistent)
+    click.echo(f"Created output device '{pipe.name}' (persistent={pipe.persistent})", err=True)
 
 
 @output.command("remove")
