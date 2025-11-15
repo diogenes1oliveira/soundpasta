@@ -179,3 +179,13 @@ cython_debug/
 
 # override files
 *.override.toml
+
+
+# Node stuff
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Mac BS
+.DS_Store/
