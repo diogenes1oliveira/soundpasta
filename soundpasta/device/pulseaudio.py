@@ -21,6 +21,10 @@ class PulseAudioDeviceManager(DeviceManager):
                         passed via command line, so use formats like "-Pipe" instead of " (Pipe)".
         """
         self.pipe_suffix = pipe_suffix
+        # Specific role suffixes for clarity in descriptions
+        self._input_suffix = "-InputPipe"
+        self._output_suffix = "-OutputPipe"
+        self._monitor_suffix = "-MonitorPipe"
         self._pulse_config_dir = Path.home() / ".config" / "pulse"
         self._soundpasta_config_file = self._pulse_config_dir / "soundpasta.pa"
         self._default_config_file = self._pulse_config_dir / "default.pa"
@@ -142,6 +146,12 @@ class PulseAudioDeviceManager(DeviceManager):
 
             if sink and monitor and remapped_source and pipe_name:
                 is_persistent = self._is_pipe_in_config(pipe_name, pipe_type)
+                # Append role suffixes for clarity (normalize to avoid "-pipe" in descriptions)
+                sink.description = self._normalize_role_description(sink.description, self._output_suffix)
+                remapped_source.description = self._normalize_role_description(
+                    remapped_source.description, self._input_suffix
+                )
+                monitor.description = self._normalize_role_description(monitor.description, self._monitor_suffix)
                 pipes.append(
                     VirtualPipe(
                         name=pipe_name,
@@ -169,7 +179,7 @@ class PulseAudioDeviceManager(DeviceManager):
             monitor_name = f"{sink_name}.monitor"
         else:
             raise ValueError(f"Invalid pipe type: {pipe_type}")
-        sink_description = f"{sink_name}{self.pipe_suffix}"
+        sink_description = f"{name}{self._output_suffix}"
         cmd = [
             "pactl",
             "load-module",
@@ -180,7 +190,7 @@ class PulseAudioDeviceManager(DeviceManager):
         logger.debug(f"Running command: {' '.join(cmd)}")
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         logger.debug(f"Created null sink module: {result.stdout.strip()}")
-        source_description = f"{source_name}{self.pipe_suffix}"
+        source_description = f"{name}{self._input_suffix}"
         remap_cmd = [
             "pactl",
             "load-module",
@@ -208,6 +218,10 @@ class PulseAudioDeviceManager(DeviceManager):
             self._write_pipe_to_config(
                 name, pipe_type, sink_name, source_name, monitor_name, sink_description, source_description
             )
+        # Ensure returned device descriptions carry role-specific suffixes (monitor cannot be set via pactl)
+        sink.description = self._normalize_role_description(sink.description, self._output_suffix)
+        monitor.description = self._normalize_role_description(monitor.description, self._monitor_suffix)
+        source.description = self._normalize_role_description(source.description, self._input_suffix)
         return VirtualPipe(
             name=name,
             type=pipe_type,
@@ -452,6 +466,34 @@ class PulseAudioDeviceManager(DeviceManager):
         )
         details["virtual"] = is_virtual
         return details
+
+    def _ensure_role_suffix(self, description: str, suffix: str) -> str:
+        """Append or normalize a role-specific suffix in a description string."""
+        if description.endswith(suffix):
+            return description
+        if self.pipe_suffix and description.endswith(self.pipe_suffix):
+            return f"{description[: -len(self.pipe_suffix)]}{suffix}"
+        # If description includes '-pipe' suffix, drop it before appending desired role suffix
+        if description.endswith("-pipe"):
+            base = description[: -len("-pipe")]
+            return f"{base}{suffix}"
+        return f"{description}{suffix}"
+
+    def _normalize_role_description(self, description: str, suffix: str) -> str:
+        """Normalize description to base name + desired role suffix, stripping existing role or '-pipe' suffixes."""
+        base = description
+        # Strip known role suffixes
+        for s in (self._input_suffix, self._output_suffix, self._monitor_suffix):
+            if base.endswith(s):
+                base = base[: -len(s)]
+                break
+        # Strip generic configured pipe suffix
+        if self.pipe_suffix and base.endswith(self.pipe_suffix):
+            base = base[: -len(self.pipe_suffix)]
+        # Strip '-pipe' if present
+        if base.endswith("-pipe"):
+            base = base[: -len("-pipe")]
+        return f"{base}{suffix}"
 
     def _ensure_config_include(self) -> None:
         """Ensure .include soundpasta.pa exists in default.pa."""

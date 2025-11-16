@@ -279,7 +279,7 @@ def device_manager() -> PulseAudioDeviceManager:
 
 @pytest.fixture
 def virtual_sink(device_manager: PulseAudioDeviceManager) -> typing.Generator[str, None, None]:
-    pipe = device_manager.create_pipe(f"test_sink_{uuid4()}", PipeType.INPUT)
+    pipe = device_manager.create_pipe(f"soundpasta-test_test_sink_{uuid4()}", PipeType.INPUT)
     try:
         yield pipe.name
     finally:
