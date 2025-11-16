@@ -4,6 +4,7 @@ import "./index.css";
 import App from "./App.tsx";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import DebugInput from "./debug/DebugInput.tsx";
+import DebugOutput from "./debug/DebugOutput.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -11,6 +12,7 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/debug/input" element={<DebugInput />} />
+        <Route path="/debug/output" element={<DebugOutput />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>

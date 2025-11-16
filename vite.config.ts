@@ -69,14 +69,10 @@ export default defineConfig({
   plugins: [react(), quietJSPlugin()],
   server: {
     https: (() => {
-      try {
-        const key = readFileSync(join(process.cwd(), "localhost-key.pem"));
-        const cert = readFileSync(join(process.cwd(), "localhost.pem"));
-        return { key, cert };
-      } catch {
-        // If certs are missing, fall back to HTTP without throwing
-        return undefined as unknown as { key: Buffer; cert: Buffer };
-      }
+      const certsDir = join(process.cwd(), "certs");
+      const key = readFileSync(join(certsDir, "localhost.key"));
+      const cert = readFileSync(join(certsDir, "localhost.crt"));
+      return { key, cert };
     })(),
   },
 });

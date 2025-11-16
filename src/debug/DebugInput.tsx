@@ -1,12 +1,32 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAudioMetrics } from "../hooks/useAudioMetrics";
+import { useSearchParamValue } from "../hooks/useSearchParamValue";
 
 export default function DebugInput() {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  const [deviceDescription, setDeviceDescription] = useSearchParamValue(
+    "device_description",
+    {
+      debounceMs: 300,
+    }
+  );
   const { volume, frequencyHz, sources, error } =
     useAudioMetrics(selectedDeviceId);
 
   const deviceId = useMemo(() => selectedDeviceId ?? "", [selectedDeviceId]);
+
+  useEffect(() => {
+    if (selectedDeviceId !== null) {
+      return;
+    }
+    if (!deviceDescription) {
+      return;
+    }
+    const match = sources.find((s) => s.label && s.label === deviceDescription);
+    if (match) {
+      setSelectedDeviceId(match.deviceId);
+    }
+  }, [deviceDescription, sources, selectedDeviceId]);
 
   return (
     <div style={{ padding: 16, fontFamily: "sans-serif" }}>
@@ -17,9 +37,17 @@ export default function DebugInput() {
         <select
           id="source"
           value={deviceId}
-          onChange={(e) =>
-            setSelectedDeviceId(e.target.value ? e.target.value : null)
-          }
+          onChange={(e) => {
+            const nextDeviceId = e.target.value ? e.target.value : null;
+            setSelectedDeviceId(nextDeviceId);
+            if (nextDeviceId) {
+              const match = sources.find((s) => s.deviceId === nextDeviceId);
+              const nextDescription = match?.label ?? null;
+              setDeviceDescription(nextDescription);
+            } else {
+              setDeviceDescription(null);
+            }
+          }}
         >
           <option value="">Default</option>
           {sources.map((s) => (
