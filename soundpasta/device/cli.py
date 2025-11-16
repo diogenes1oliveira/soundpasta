@@ -1,3 +1,6 @@
+import io
+import typing
+
 import click
 from tabulate import tabulate
 
@@ -67,6 +70,28 @@ def input_remove(obj: DeviceManager, name: str) -> None:
     # TODO: Implement when DeviceManager has remove_input method
 
 
+@input.command("record")
+@click.argument("device_name")
+@click.argument("output_file", type=click.Path())
+@click.argument("duration", type=float)
+@click.option("--raw/--no-raw", default=False, help="Record as raw PCM data")
+@click.pass_obj
+def input_record(obj: DeviceManager, device_name: str, output_file: str, duration: float, raw: bool) -> None:
+    """Record audio from the specified input device to a file."""
+    devices = obj.list_inputs()
+    device = next((d for d in devices if d.name == device_name), None)
+    if not device:
+        click.echo(f"Input device '{device_name}' not found", err=True)
+        raise click.Abort()
+
+    recorded_data = io.BytesIO()
+    obj.record(device, recorded_data, duration, raw=raw)
+    recorded_data.seek(0)
+    with open(output_file, "wb") as f:
+        f.write(recorded_data.read())
+    click.echo(f"Recorded audio from device '{device_name}' to '{output_file}'", err=True)
+
+
 @device.group()
 @click.pass_obj
 def output(obj: DeviceManager) -> None:
@@ -119,3 +144,19 @@ def output_remove(obj: DeviceManager, name: str) -> None:
     """Remove a virtual output device."""
     click.echo(f"Removing output device '{name}'", err=True)
     # TODO: Implement when DeviceManager has remove_output method
+
+
+@output.command("play")
+@click.argument("device_name")
+@click.argument("audio_file", type=click.File("rb"))
+@click.option("--raw/--no-raw", default=False, help="Treat audio as raw PCM data")
+@click.pass_obj
+def output_play(obj: DeviceManager, device_name: str, audio_file: typing.IO[bytes], raw: bool) -> None:
+    """Play audio file to the specified output device."""
+    devices = obj.list_outputs()
+    device = next((d for d in devices if d.name == device_name), None)
+    if not device:
+        click.echo(f"Output device '{device_name}' not found", err=True)
+        raise click.Abort()
+    obj.play(device, audio_file, raw=raw)
+    click.echo(f"Played audio to device '{device_name}'", err=True)
