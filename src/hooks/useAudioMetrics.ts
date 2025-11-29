@@ -198,7 +198,9 @@ export function useQuietProfiles(): string[] {
     async function fetchProfiles() {
       try {
         console.log("[useQuietProfiles] Loading profiles...");
-        const response = await fetch("/quietjs/quiet-profiles.json");
+        const basePath = import.meta.env.VITE_APP_BASE_PATH || "/";
+        const url = `${basePath}quietjs/quiet-profiles.json`.replace(/\/+/g, "/");
+        const response = await fetch(url);
         if (cancelled) {
           return;
         }

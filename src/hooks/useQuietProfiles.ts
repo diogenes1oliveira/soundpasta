@@ -9,7 +9,9 @@ export interface QuietProfiles {
 }
 
 async function fetchQuietProfiles(): Promise<QuietProfiles> {
-  const response = await fetch("/quietjs/quiet-profiles.json");
+  const basePath = import.meta.env.VITE_APP_BASE_PATH || "/";
+  const url = `${basePath}quietjs/quiet-profiles.json`.replace(/\/+/g, "/");
+  const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch profiles: ${response.statusText}`);
   }
