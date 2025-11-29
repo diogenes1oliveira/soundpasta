@@ -6,6 +6,7 @@ export interface UseQuietDuplexOptions {
   micDeviceId?: string | null;
   speakerDeviceId?: string | null;
   profile?: string;
+  clampFrame?: boolean;
   onData?: (data: Uint8Array) => void;
 }
 
@@ -25,6 +26,7 @@ export function useQuietDuplex(
     micDeviceId,
     speakerDeviceId,
     profile = "ultrasonic",
+    clampFrame,
     onData,
   } = options;
 
@@ -105,6 +107,7 @@ export function useQuietDuplex(
         profileDef,
         micDeviceId: micDeviceId ?? undefined,
         speakerDeviceId: speakerDeviceId ?? undefined,
+        clampFrame,
         onData: (data) => {
           if (onData) {
             onData(data);
@@ -125,7 +128,15 @@ export function useQuietDuplex(
       setIsReady(false);
       stop();
     }
-  }, [micDeviceId, speakerDeviceId, profile, profileDef, onData, stop]);
+  }, [
+    micDeviceId,
+    speakerDeviceId,
+    profile,
+    profileDef,
+    clampFrame,
+    onData,
+    stop,
+  ]);
 
   const send = useCallback(async (data: Uint8Array) => {
     if (!duplexRef.current) {

@@ -33,6 +33,13 @@ export default function DebugQuietJS() {
   const [profileName, setProfileName] = useSearchParamValue("profile", {
     debounceMs: 300,
   });
+  const [clampFrameParam, setClampFrameParam] = useSearchParamValue(
+    "clamp_frame",
+    {
+      debounceMs: 300,
+    }
+  );
+  const clampFrame = clampFrameParam === "true";
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: devicesData, isLoading, error, refetch } = useListDevices();
@@ -68,6 +75,7 @@ export default function DebugQuietJS() {
     micDeviceId: selectedInputDeviceId,
     speakerDeviceId: selectedOutputDeviceId,
     profile: selectedProfile,
+    clampFrame,
     onData: handleIncomingData,
   });
 
@@ -233,6 +241,20 @@ export default function DebugQuietJS() {
             ))
           )}
         </select>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <label htmlFor="clamp-frame">
+          <input
+            id="clamp-frame"
+            type="checkbox"
+            checked={clampFrame}
+            onChange={(e) => {
+              setClampFrameParam(e.target.checked ? "true" : null);
+            }}
+          />{" "}
+          Clamp Frame
+        </label>
       </div>
 
       <div style={{ marginTop: 24, marginBottom: 16 }}>
