@@ -176,15 +176,15 @@ export class QuietDuplex {
           await this.audioContext.setSinkId(speakerDeviceId);
           console.log("[QuietDuplex] setup() - Sink ID set successfully");
         } catch (error) {
-          console.warn(
-            `[QuietDuplex] setup() - Failed to set sink ID: ${
+          throw new Error(
+            `Failed to set sink ID: ${
               error instanceof Error ? error.message : String(error)
-            }. Continuing anyway.`
+            }`
           );
         }
       } else {
-        console.warn(
-          "[QuietDuplex] setup() - setSinkId is not supported in this browser"
+        throw new Error(
+          "setSinkId is not supported in this browser. Cannot set speaker device."
         );
       }
     } else {
