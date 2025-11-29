@@ -181,7 +181,7 @@ export default function DebugQuietJS() {
               setInputDeviceDescription(null);
             }
           }}
-          disabled={isLoading}
+          disabled={isLoading || isReady}
         >
           <option value="">Unset</option>
           {inputs.map((s) => (
@@ -208,7 +208,7 @@ export default function DebugQuietJS() {
               setOutputDeviceDescription(null);
             }
           }}
-          disabled={isLoading}
+          disabled={isLoading || isReady}
         >
           <option value="">Unset</option>
           {outputs.map((s) => (
@@ -228,7 +228,7 @@ export default function DebugQuietJS() {
             const nextProfile = e.target.value || null;
             setProfileName(nextProfile);
           }}
-          disabled={isLoadingProfiles}
+          disabled={isLoadingProfiles || isReady}
         >
           {isLoadingProfiles ? (
             <option>Loading profiles...</option>
@@ -252,6 +252,7 @@ export default function DebugQuietJS() {
             onChange={(e) => {
               setClampFrameParam(e.target.checked ? "true" : null);
             }}
+            disabled={isReady}
           />{" "}
           Clamp Frame
         </label>
