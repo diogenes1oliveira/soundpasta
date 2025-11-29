@@ -134,7 +134,19 @@ export default function DebugQuietJS() {
   ]);
 
   return (
-    <div style={{ padding: 16, fontFamily: "sans-serif" }}>
+    <div
+      style={{
+        padding: "16px",
+        fontFamily: "system-ui, Avenir, Helvetica, Arial, sans-serif",
+        width: "100%",
+        minHeight: "100vh",
+        margin: "0",
+        textAlign: "left",
+        color: "rgba(255, 255, 255, 0.87)",
+        backgroundColor: "#242424",
+        boxSizing: "border-box",
+      }}
+    >
       <h2>/debug/quietjs</h2>
 
       <div style={{ marginBottom: 12 }}>
@@ -145,6 +157,11 @@ export default function DebugQuietJS() {
             padding: "8px 16px",
             fontSize: "14px",
             cursor: isLoading ? "not-allowed" : "pointer",
+            color: "rgba(255, 255, 255, 0.87)",
+            backgroundColor: "#1a1a1a",
+            border: "1px solid transparent",
+            borderRadius: "8px",
+            fontFamily: "inherit",
           }}
         >
           {isLoading ? "Refreshing..." : "Refresh Devices"}
@@ -275,6 +292,11 @@ export default function DebugQuietJS() {
             width: "100%",
             maxWidth: "400px",
             cursor: isDuplexLoading ? "not-allowed" : "pointer",
+            color: "rgba(255, 255, 255, 0.87)",
+            backgroundColor: "#1a1a1a",
+            border: "1px solid transparent",
+            borderRadius: "8px",
+            fontFamily: "inherit",
           }}
         >
           {isDuplexLoading
@@ -417,6 +439,11 @@ export default function DebugQuietJS() {
               fontSize: "14px",
               opacity: isReady ? 1 : 0.5,
               cursor: isReady ? "pointer" : "not-allowed",
+              color: "rgba(255, 255, 255, 0.87)",
+              backgroundColor: "#1a1a1a",
+              border: "1px solid transparent",
+              borderRadius: "8px",
+              fontFamily: "inherit",
             }}
           >
             Send
