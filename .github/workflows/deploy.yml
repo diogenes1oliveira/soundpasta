@@ -35,6 +35,7 @@ jobs:
         env:
           APP_BASE_PATH: /soundpasta/
           APP_NO_HTTPS: "true"
+          APP_GITHUB_PAGES: "true"
         run: npm run build
 
       - name: Setup Pages

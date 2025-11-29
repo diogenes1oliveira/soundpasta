@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { githubPagesSpa } from "@sctg/vite-plugin-github-pages-spa";
 
 // https://vite.dev/config/
 const basePath = process.env.APP_BASE_PATH || "/";
@@ -11,7 +12,16 @@ export default defineConfig({
   define: {
     "import.meta.env.VITE_APP_BASE_PATH": JSON.stringify(basePath),
   },
-  plugins: [react()],
+  plugins: [
+    react(),
+    ...(process.env.APP_GITHUB_PAGES === "true"
+      ? [
+          githubPagesSpa({
+            verbose: true,
+          }),
+        ]
+      : []),
+  ],
   server: {
     ...(process.env.APP_NO_HTTPS !== "true" && {
       https: (() => {
