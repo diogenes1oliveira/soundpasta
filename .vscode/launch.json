@@ -1,0 +1,36 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    // "configurations": [
+    //     {
+    //         "name": "kudocker: daemon CLI",
+    //         "type": "debugpy",
+    //         "request": "launch",
+    //         "module": "kudocker",
+    //         "args": [
+    //             "--log-level",
+    //             "DEBUG",
+    //             "daemon",
+    //             "${input:daemonCommand}"
+    //         ],
+    //         "console": "integratedTerminal"
+    //     }
+    // ],
+    // "inputs": [
+    //     {
+    //         "id": "daemonCommand",
+    //         "description": "Which daemon command to run?",
+    //         "type": "pickString",
+    //         "options": [
+    //             "start",
+    //             "stop",
+    //             "status",
+    //             "logs",
+    //             "kill",
+    //             "list"
+    //         ]
+    //     }
+    // ]
+}

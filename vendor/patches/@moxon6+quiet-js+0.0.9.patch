@@ -1,0 +1,28 @@
+diff --git a/node_modules/@moxon6/quiet-js/index.js b/node_modules/@moxon6/quiet-js/index.js
+index 6dd7863..717c526 100644
+--- a/node_modules/@moxon6/quiet-js/index.js
++++ b/node_modules/@moxon6/quiet-js/index.js
+@@ -1,4 +1,4 @@
+-function resumeIfSuspended(audioCtx) {
++export function resumeIfSuspended(audioCtx) {
+   if (audioCtx.state === 'suspended') {
+     audioCtx.resume();
+   }
+@@ -51,7 +51,7 @@ const sampleBufferSize = 16384;
+ 
+ const waitUntil = (seconds) => new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+ 
+-class Transmitter {
++export class Transmitter {
+   constructor(audioContext, instance) {
+     this.destroyed = false;
+     this.audioContext = audioContext;
+@@ -135,7 +135,7 @@ class Transmitter {
+   }
+ }
+ 
+-var importObject = {
++export var importObject = {
+   env: {
+     __sys_getpid: () => null,
+   },
