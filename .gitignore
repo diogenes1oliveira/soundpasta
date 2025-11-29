@@ -191,7 +191,5 @@ dist-ssr/
 .DS_Store/
 
 # Builder and dev stuff
-/public/quietjs/*
-!/public/quietjs/quiet.js
 /localhost.pem
 /localhost-key.pem

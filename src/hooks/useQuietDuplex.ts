@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { QuietDuplex } from "../lib/QuietDuplex";
+import { useQuietProfiles } from "./useQuietProfiles";
 
 export interface UseQuietDuplexOptions {
   micDeviceId?: string | null;
   speakerDeviceId?: string | null;
-  profile?: string | object;
+  profile?: string;
   onData?: (data: Uint8Array) => void;
 }
 
@@ -18,10 +19,23 @@ export interface UseQuietDuplexResult {
 }
 
 export function useQuietDuplex(
-  options: UseQuietDuplexOptions = {}
+  options: UseQuietDuplexOptions
 ): UseQuietDuplexResult {
-  const { micDeviceId, speakerDeviceId, profile = "ultrasonic", onData } =
-    options;
+  const {
+    micDeviceId,
+    speakerDeviceId,
+    profile = "ultrasonic",
+    onData,
+  } = options;
+
+  const { data: profilesData } = useQuietProfiles();
+
+  const profileDef = useMemo(() => {
+    if (!profilesData) {
+      return null;
+    }
+    return profilesData[profile] ?? null;
+  }, [profilesData, profile]);
 
   const [isReady, setIsReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,8 +63,19 @@ export function useQuietDuplex(
   const start = useCallback(async () => {
     console.log("[useQuietDuplex] start() - Starting");
     if (duplexRef.current) {
-      console.log("[useQuietDuplex] start() - Existing duplex found, stopping first");
+      console.log(
+        "[useQuietDuplex] start() - Existing duplex found, stopping first"
+      );
       stop();
+    }
+
+    if (!profileDef) {
+      const error = new Error(
+        `Profile "${profile}" not found or profiles not loaded`
+      );
+      setError(error);
+      setIsLoading(false);
+      return;
     }
 
     console.log("[useQuietDuplex] start() - Setting loading state");
@@ -65,16 +90,19 @@ export function useQuietDuplex(
       console.log("[useQuietDuplex] start() - AudioContext created");
 
       console.log(
-        `[useQuietDuplex] start() - Creating QuietDuplex with profile: ${typeof profile === "string" ? profile : "object"}`
+        `[useQuietDuplex] start() - Creating QuietDuplex with profile: ${profile}`
       );
-      const duplex = new QuietDuplex(audioContext, profile);
+      const duplex = new QuietDuplex(audioContext);
       duplexRef.current = duplex;
       console.log("[useQuietDuplex] start() - QuietDuplex created");
 
       console.log(
-        `[useQuietDuplex] start() - Calling duplex.setup() with micDeviceId: ${micDeviceId ?? "undefined"}, speakerDeviceId: ${speakerDeviceId ?? "undefined"}`
+        `[useQuietDuplex] start() - Calling duplex.setup() with micDeviceId: ${
+          micDeviceId ?? "undefined"
+        }, speakerDeviceId: ${speakerDeviceId ?? "undefined"}`
       );
       await duplex.setup({
+        profileDef,
         micDeviceId: micDeviceId ?? undefined,
         speakerDeviceId: speakerDeviceId ?? undefined,
         onData: (data) => {
@@ -97,17 +125,14 @@ export function useQuietDuplex(
       setIsReady(false);
       stop();
     }
-  }, [micDeviceId, speakerDeviceId, profile, onData, stop]);
+  }, [micDeviceId, speakerDeviceId, profile, profileDef, onData, stop]);
 
-  const send = useCallback(
-    async (data: Uint8Array) => {
-      if (!duplexRef.current) {
-        throw new Error("QuietDuplex is not started");
-      }
-      await duplexRef.current.send(data);
-    },
-    []
-  );
+  const send = useCallback(async (data: Uint8Array) => {
+    if (!duplexRef.current) {
+      throw new Error("QuietDuplex is not started");
+    }
+    await duplexRef.current.send(data);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -124,4 +149,3 @@ export function useQuietDuplex(
     send,
   };
 }
-

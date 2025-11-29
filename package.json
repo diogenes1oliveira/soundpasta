@@ -10,7 +10,6 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "bundle:quietjs": "tsx src/scripts/bundleQuietJs.ts",
     "postinstall": "patch-package --patch-dir vendor/patches"
   },
   "dependencies": {

@@ -74,6 +74,7 @@ export async function listDevices(): Promise<{
 }
 
 export interface QuietDuplexSetupOptions {
+  profileDef: object;
   micDeviceId?: string;
   speakerDeviceId?: string;
   clampFrame?: boolean;
@@ -82,8 +83,6 @@ export interface QuietDuplexSetupOptions {
 
 export class QuietDuplex {
   private audioContext: AudioContext;
-  private profile: string | object;
-  private profileObject: object | null = null;
   private ready: boolean = false;
   private instance: WebAssembly.Instance | null = null;
   private quietProcessorNode: AudioWorkletNode | null = null;
@@ -92,49 +91,11 @@ export class QuietDuplex {
   private audioStream: MediaStream | null = null;
   private onData: ((data: Uint8Array) => void) | null = null;
 
-  constructor(audioContext: AudioContext, profile: string | object) {
+  constructor(audioContext: AudioContext) {
     this.audioContext = audioContext;
-    this.profile = profile;
   }
 
-  private async loadProfileDefinition(): Promise<object> {
-    if (typeof this.profile === "object") {
-      return this.profile;
-    }
-
-    if (this.profileObject) {
-      return this.profileObject;
-    }
-
-    console.log(
-      `[QuietDuplex] loadProfileDefinition() - Loading profile definition for: ${this.profile}`
-    );
-    try {
-      const response = await fetch("/quietjs/quiet-profiles.json");
-      if (!response.ok) {
-        throw new Error(`Failed to fetch profiles: ${response.statusText}`);
-      }
-      const profiles = await response.json();
-      const profileDef = profiles[this.profile];
-      if (!profileDef) {
-        throw new Error(`Profile "${this.profile}" not found in profiles`);
-      }
-      this.profileObject = profileDef;
-      console.log(
-        `[QuietDuplex] loadProfileDefinition() - Profile definition loaded`
-      );
-      return profileDef;
-    } catch (error) {
-      console.error(
-        `[QuietDuplex] loadProfileDefinition() - Error: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
-      throw error;
-    }
-  }
-
-  async load(profileDef?: object): Promise<void> {
+  async load(profileDef: object): Promise<void> {
     console.log("[QuietDuplex] load() - Starting WASM instantiation");
     const { module, instance } = await WebAssembly.instantiateStreaming(
       fetch(quietWasmUrl),
@@ -150,13 +111,6 @@ export class QuietDuplex {
       await audioWorklet.addModule(quietWorkletUrl);
       console.log("[QuietDuplex] load() - Audio worklet module added");
 
-      // Use provided profileDef or load it if not provided
-      const profileToUse =
-        profileDef ??
-        (typeof this.profile === "object"
-          ? this.profile
-          : await this.loadProfileDefinition());
-
       console.log("[QuietDuplex] load() - Creating AudioWorkletNode");
       this.quietProcessorNode = new AudioWorkletNode(
         this.audioContext,
@@ -164,7 +118,7 @@ export class QuietDuplex {
         {
           processorOptions: {
             quietModule: module,
-            profile: profileToUse,
+            profile: profileDef,
             sampleRate: this.audioContext.sampleRate,
           },
         }
@@ -199,9 +153,10 @@ export class QuietDuplex {
     console.log("[QuietDuplex] cleanup() - Cleanup complete");
   }
 
-  async setup(options: QuietDuplexSetupOptions = {}): Promise<void> {
+  async setup(options: QuietDuplexSetupOptions): Promise<void> {
     console.log("[QuietDuplex] setup() - Starting setup");
-    const { micDeviceId, speakerDeviceId, clampFrame, onData } = options;
+    const { profileDef, micDeviceId, speakerDeviceId, clampFrame, onData } =
+      options;
 
     console.log("[QuietDuplex] setup() - Cleaning up previous instance");
     this.cleanup();
@@ -237,14 +192,6 @@ export class QuietDuplex {
         "[QuietDuplex] setup() - No speakerDeviceId provided, skipping setSinkId"
       );
     }
-
-    // Load profile definition early so we can use it for both transmitter and receiver
-    console.log(
-      `[QuietDuplex] setup() - Loading profile definition: ${
-        typeof this.profile === "string" ? this.profile : "object"
-      }`
-    );
-    const profileDef = await this.loadProfileDefinition();
 
     console.log(
       `[QuietDuplex] setup() - Requesting user audio (micDeviceId: ${

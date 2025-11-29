@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParamValue } from "../hooks/useSearchParamValue";
 import { useListDevices } from "../hooks/useListDevices";
 import { useQuietDuplex } from "../hooks/useQuietDuplex";
+import { useQuietProfiles } from "../hooks/useQuietProfiles";
 
 interface Message {
   id: string;
@@ -29,9 +30,14 @@ export default function DebugQuietJS() {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
+  const [profileName, setProfileName] = useSearchParamValue("profile", {
+    debounceMs: 300,
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { data: devicesData, isLoading, error, refetch } = useListDevices();
+  const { data: profilesData, isLoading: isLoadingProfiles } =
+    useQuietProfiles();
 
   const handleIncomingData = useCallback((data: Uint8Array) => {
     const text = new TextDecoder().decode(data);
@@ -49,6 +55,8 @@ export default function DebugQuietJS() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const selectedProfile = profileName ?? "ultrasonic";
+
   const {
     isReady,
     isLoading: isDuplexLoading,
@@ -59,6 +67,7 @@ export default function DebugQuietJS() {
   } = useQuietDuplex({
     micDeviceId: selectedInputDeviceId,
     speakerDeviceId: selectedOutputDeviceId,
+    profile: selectedProfile,
     onData: handleIncomingData,
   });
 
@@ -199,6 +208,30 @@ export default function DebugQuietJS() {
               {s.label || `Output (${s.deviceId.slice(0, 6)}...)`}
             </option>
           ))}
+        </select>
+      </div>
+
+      <div style={{ marginBottom: 12 }}>
+        <label htmlFor="profile">Profile: </label>
+        <select
+          id="profile"
+          value={selectedProfile}
+          onChange={(e) => {
+            const nextProfile = e.target.value || null;
+            setProfileName(nextProfile);
+          }}
+          disabled={isLoadingProfiles}
+        >
+          {isLoadingProfiles ? (
+            <option>Loading profiles...</option>
+          ) : (
+            profilesData &&
+            Object.keys(profilesData).map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))
+          )}
         </select>
       </div>
 
