@@ -188,3 +188,47 @@ export function useAudioMetrics(
 
   return { volume, frequencyHz, sources, error };
 }
+
+export function useQuietProfiles(): string[] {
+  const [profiles, setProfiles] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchProfiles() {
+      try {
+        console.log("[useQuietProfiles] Loading profiles...");
+        const response = await fetch("/quietjs/quiet-profiles.json");
+        if (cancelled) {
+          return;
+        }
+        if (!response.ok) {
+          throw new Error(`Failed to fetch profiles: ${response.statusText}`);
+        }
+        const data = await response.json();
+        if (cancelled) {
+          return;
+        }
+        const profileNames = Object.keys(data);
+        console.log(
+          `[useQuietProfiles] Loaded ${profileNames.length} profiles`
+        );
+        setProfiles(profileNames);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+        console.error("[useQuietProfiles] Error loading profiles:", error);
+        setProfiles([]);
+      }
+    }
+
+    fetchProfiles();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return profiles;
+}
