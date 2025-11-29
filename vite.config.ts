@@ -5,6 +5,7 @@ import { join } from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: process.env.APP_BASE_PATH || "/",
   plugins: [react()],
   server: {
     https: (() => {

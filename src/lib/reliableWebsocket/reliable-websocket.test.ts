@@ -7,7 +7,6 @@ import { PACKET_FLAGS } from "./types";
 import {
   createTestPayload,
   extractPacketHeader,
-  waitForEvent,
 } from "./__tests__/test-utils";
 
 describe("ReliableWebSocket", () => {
@@ -229,10 +228,8 @@ describe("ReliableWebSocket", () => {
       await vi.runAllTimersAsync();
 
       expect(receivedMessage).not.toBeNull();
-      if (receivedMessage) {
-        const receivedData = receivedMessage.data as ArrayBuffer;
-        expect(receivedData.byteLength).toBe(largeData.byteLength);
-      }
+      const receivedData = receivedMessage!.data as ArrayBuffer;
+      expect(receivedData.byteLength).toBe(largeData.byteLength);
     });
   });
 
@@ -266,7 +263,6 @@ describe("ReliableWebSocket", () => {
       expect(dataPackets.length).toBeGreaterThan(0);
 
       commWithLoss.clearSentPackets();
-      const originalOnReceive = commWithLoss.onReceive;
       commWithLoss.onReceive = undefined;
 
       vi.advanceTimersByTime(DEFAULT_CONFIG.retransmissionTimeout + 100);

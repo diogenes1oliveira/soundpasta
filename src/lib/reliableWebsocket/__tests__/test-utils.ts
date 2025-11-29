@@ -1,4 +1,4 @@
-import { PACKET_HEADER_SIZE, PACKET_FLAGS } from "../types";
+import { PACKET_HEADER_SIZE } from "../types";
 import { encodePacket, decodePacket } from "../packet";
 
 export function createTestPacket(

@@ -10,7 +10,7 @@ export interface MockCommunicatorOptions {
 export class MockUnreliableCommunicator implements UnreliableCommunicator {
   private sentPackets: ArrayBuffer[] = [];
   private options: MockCommunicatorOptions;
-  private connectedTo?: MockUnreliableCommunicator;
+  connectedTo?: MockUnreliableCommunicator;
   onReceive?: (data: ArrayBuffer) => void;
   onError?: (error: Error) => void;
 
