@@ -1,3 +1,0 @@
-[submodule "vendor/quiet-js"]
-	path = vendor/quiet-js
-	url = https://github.com/moxon6/quiet-js.git
