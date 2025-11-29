@@ -8,10 +8,12 @@ import DebugOutput from "./debug/DebugOutput.tsx";
 import DebugQuietJS from "./debug/DebugQuietJS.tsx";
 import { QueryProvider } from "./providers/QueryProvider.tsx";
 
+const basePath = import.meta.env.VITE_APP_BASE_PATH || "/";
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={basePath}>
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/debug/input" element={<DebugInput />} />

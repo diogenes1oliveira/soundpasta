@@ -4,8 +4,13 @@ import { readFileSync } from "fs";
 import { join } from "path";
 
 // https://vite.dev/config/
+const basePath = process.env.APP_BASE_PATH || "/";
+
 export default defineConfig({
-  base: process.env.APP_BASE_PATH || "/",
+  base: basePath,
+  define: {
+    "import.meta.env.VITE_APP_BASE_PATH": JSON.stringify(basePath),
+  },
   plugins: [react()],
   server: {
     ...(process.env.APP_NO_HTTPS !== "true" && {
